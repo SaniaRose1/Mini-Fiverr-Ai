@@ -2,6 +2,7 @@ import dotenv from 'dotenv';
 import express from  'express';
 import fetch from "node-fetch";
 import bcrypt from "bcryptjs";
+import mongoose from "mongoose";
 import path from "path";
 import {GoogleGenAI} from "@google/genai"
 import User from  '../../models/Users.js';
