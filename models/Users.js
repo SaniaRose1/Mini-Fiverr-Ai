@@ -8,10 +8,7 @@ const userSchema = new mongoose.Schema({
       
     },
     skill:[String],
-    rating:{
-      type:Number,
-      default:0
-    },
+    
     role:{
         type:String,
         enum :["poster","freelancer"],

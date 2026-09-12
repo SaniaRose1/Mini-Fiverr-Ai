@@ -7,9 +7,9 @@ import Dashboard from "./Dashboard";
 const Layout = () =>{
   
     return(
- <div className='container'>
+ <div className="container">
   <Sidebar/>
-  <div style={{display:'flex',flexDirection:"column"}}>
+  <div className ="containers">
  <Header/>
   
 <Outlet/>

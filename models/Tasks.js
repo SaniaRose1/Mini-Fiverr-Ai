@@ -6,7 +6,7 @@ const taskSchema = new mongoose.Schema({
  budget : Number ,
  issueDate : Date,
   deadlineDate : Date,
-  skill :String
+  skill :[String]
 });
 
 module.exports = mongoose.model("Task" , taskSchema );

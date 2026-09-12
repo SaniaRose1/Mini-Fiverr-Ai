@@ -1,0 +1,151 @@
+MINIFIVERR WEBSITE
+
+ABOUT MINIFIVERR
+
+MiniFiverr is a freelancing platform where users can
+post tasks and freelancers can apply for tasks.
+
+The platform connects people who need work completed
+with freelancers who have the required skills.
+
+USER ROLES
+
+MiniFiverr has two main roles:
+
+1. Poster
+2. Freelancer
+
+
+POSTER
+
+A poster is a user who creates tasks.
+
+A poster can:
+
+- Create a new task
+- Add task title
+- Add task description
+- Add required skills
+- Add budget
+- View posted tasks
+- View applicants
+- Select a freelancer
+- Manage posted tasks
+
+
+FREELANCER
+
+A freelancer is a user who completes tasks.
+
+A freelancer can:
+
+- View available tasks
+- Search for tasks
+- View task details
+- Apply for tasks
+- View applied tasks
+- View selected tasks
+- Update their profile
+- View their rating
+
+
+CREATING A TASK
+
+A poster can create a task by providing:
+
+- Task title
+- Task description
+- Required skills
+- Budget
+
+After creating the task, freelancers can view and
+apply for it.
+
+
+APPLYING FOR A TASK
+
+A freelancer can open an available task and apply for it.
+
+The freelancer should have skills relevant to the task.
+
+After applying, the freelancer can view the status
+of their application.
+
+
+SELECTING A FREELANCER
+
+A poster can view applicants for a posted task.
+
+The poster can select a suitable freelancer from
+the list of applicants.
+
+
+PROFILE
+
+Users can manage their profile information.
+
+Freelancers can add or update information such as:
+
+- Name
+- Email
+- Skills
+- Experience
+- Profile information
+
+
+TASKS
+
+Tasks contain information such as:
+
+- Title
+- Description
+- Required skills
+- Budget
+- Status
+
+
+TASK STATUS
+
+A task may have different statuses such as:
+
+- Available
+- In Progress
+- Completed
+- Closed
+
+
+RATINGS
+
+Freelancers can receive ratings based on their work.
+
+A higher rating can help demonstrate good performance.
+
+
+CHATBOT
+
+The MiniFiverr AI assistant can answer questions about
+the MiniFiverr website.
+
+It can also search available tasks and provide
+personalized information to the logged-in freelancer.
+
+
+EXAMPLES OF QUESTIONS
+
+Users can ask:
+
+"What can I do as a freelancer?"
+
+"How do I apply for a task?"
+
+"How can I create a task?"
+
+"What can a poster do?"
+
+"What tasks are available?"
+
+"Which tasks match my skills?"
+
+"Tell me about myself."
+
+"What tasks have I applied for?"

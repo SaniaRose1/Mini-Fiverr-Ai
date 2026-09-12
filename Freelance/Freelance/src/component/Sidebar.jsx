@@ -5,24 +5,24 @@ const Sidebar=()=>{
   const location = useLocation();
    const navigate = useNavigate();
     const buttons = [
-    {name: "Dashboard", path:"/dashboard"}
+    {name: "Dashboard", path:"/dashboard" , icon:"bi bi-clipboard-check"}
     ];
   
 
     return(
-<div className="sidebar">
-    <div className="d-flex flex-column  p-3 " style={{width: "280px"}}> <a href="/" className="d-flex align-items-center mb-3 mb-md-0 me-md-auto link-body-emphasis text-decoration-none"> <svg className="bi pe-none me-2" width="40" height="100" aria-hidden="true"><use xlinkHref="#bootstrap"></use></svg> <span className="fs-4" style={{fontWeight:"bold"}}>MiniFiverr</span> </a> <hr/> 
+     <div className="sidebar" >
+    <i class="bi bi-browser-firefox" style={{color:"white" , display:"flex", justifyContent:"center", alignItems:"center" , fontSize:"60px"}}></i>
+    <span className="fs-4" style={{fontWeight:"bold" , color:"white" , fontStyle:"italic"}}>MiniFiverr</span>  <hr/> 
   
     
   {buttons.map((items,index)=>(
      
      <div className="listBtn" key={items.id || index} >
-     <button type="button"  onClick={()=> navigate(items.path) } className={`btn  ${location.pathname === items.path ? "active" : " "}  `} >{items.name}</button>
+     <button type="button"  onClick={()=> navigate(items.path) }     className={`btn  ${location.pathname === "/dashboard" || location.pathname === "/PostedTasks" || location.pathname === "/ApplyForTasks" || location.pathname === "/Applicantlist"  || location.pathname === "/Selectedfreelancer"|| location.pathname === "/Lecture" ? "active" : " "}  `} ><i className={items.icon}></i> {items.name}</button>
 </div>
      
   ))}  
-   </div> </div>
-
+   </div> 
     );
 }
 export default Sidebar;

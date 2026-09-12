@@ -5,7 +5,7 @@ const Layout1 = ()=>{
   return(
 <div className='container'>
   <Sidebar/>
-  <div style={{flex:1}}>
+  <div >
     <Outlet/>
   </div>
   </div>
