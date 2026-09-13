@@ -1,44 +1,41 @@
 import os
-
-
-
-os.environ["TOKENIZERS_PARALLELISM"] = "false"
-os.environ["OMP_NUM_THREADS"] = "1"
-os.environ["MKL_NUM_THREADS"] = "1"
-os.environ["OPENBLAS_NUM_THREADS"] = "1"
+import re
 
 from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
-from langchain_community.embeddings import HuggingFaceEmbeddings
-from langchain_community.vectorstores import FAISS
-
+from pymongo import MongoClient
 from groq import Groq
 
 
-
+# =========================================================
+# LOAD ENVIRONMENT VARIABLES
+# =========================================================
 
 load_dotenv()
 
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+MONGO_URI = os.getenv("Mongo_Uri")
+MONGO_DB_NAME = os.getenv("MONGO_DB_NAME")
+
 
 if not GROQ_API_KEY:
     raise ValueError("GROQ_API_KEY is missing.")
 
 
+if not MONGO_URI:
+    raise ValueError("Mongo_Uri is missing.")
 
 
-INDEX_SAVE_DIR = "faiss_index"
-
-EMBEDDING_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
-
-# Keep CPU usage low on Render
-os.environ["CUDA_VISIBLE_DEVICES"] = ""
+if not MONGO_DB_NAME:
+    raise ValueError("MONGO_DB_NAME is missing.")
 
 
-
+# =========================================================
+# FASTAPI APPLICATION
+# =========================================================
 
 app = FastAPI(
     title="MiniFiverr AI Assistant",
@@ -47,126 +44,537 @@ app = FastAPI(
 )
 
 
-
+# =========================================================
+# CORS
+# =========================================================
 
 frontend_url = os.getenv(
     "FRONTEND_URL",
     "http://localhost:5173"
 )
 
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[frontend_url],
+
+    allow_origins=[
+        frontend_url,
+        "http://localhost:5173"
+    ],
+
     allow_credentials=True,
+
     allow_methods=["*"],
+
     allow_headers=["*"]
 )
 
 
-
+# =========================================================
+# GROQ CLIENT
+# =========================================================
 
 client = Groq(
     api_key=GROQ_API_KEY
 )
 
 
+# =========================================================
+# WEBSITE INFORMATION FILE
+# =========================================================
+
+WEBSITE_FILE = "website_info.txt"
 
 
-embeddings = None
-vector_store = None
+def load_website_information():
 
+    print(
+        "Loading website information...",
+        flush=True
+    )
 
+    if not os.path.exists(WEBSITE_FILE):
 
-
-def load_rag():
-
-    global embeddings
-    global vector_store
-
-    # Already loaded
-    if embeddings is not None and vector_store is not None:
-        return
-
-    print("==============================================")
-    print("Loading MiniFiverr RAG system...")
-    print("==============================================")
-
-    
-
-    if not os.path.exists(INDEX_SAVE_DIR):
-
-        raise FileNotFoundError(
-            f"FAISS index folder '{INDEX_SAVE_DIR}' was not found."
+        print(
+            f"ERROR: {WEBSITE_FILE} not found.",
+            flush=True
         )
 
-    
+        return ""
 
-    print("Loading embedding model...")
 
-    embeddings = HuggingFaceEmbeddings(
-        model_name=EMBEDDING_MODEL,
-        model_kwargs={
-            "device": "cpu"
-        },
-        encode_kwargs={
-            "normalize_embeddings": True,
-            "batch_size": 1
-        }
+    try:
+
+        with open(
+            WEBSITE_FILE,
+            "r",
+            encoding="utf-8"
+        ) as file:
+
+            text = file.read()
+
+
+        print(
+            "Website information loaded successfully.",
+            flush=True
+        )
+
+
+        return text
+
+
+    except Exception as e:
+
+        print(
+            "Website information error:",
+            repr(e),
+            flush=True
+        )
+
+        return ""
+
+
+# Load website information once
+website_information = load_website_information()
+
+
+# =========================================================
+# MONGODB TASK SEARCH
+# =========================================================
+
+def get_words(text):
+
+    return set(
+        re.findall(
+            r"[a-zA-Z0-9]+",
+            str(text).lower()
+        )
     )
 
-    print("Embedding model loaded.")
 
-    
+def search_tasks(question):
 
-    print("Loading FAISS index...")
-
-    vector_store = FAISS.load_local(
-        INDEX_SAVE_DIR,
-        embeddings,
-        allow_dangerous_deserialization=True
+    print(
+        "Searching MongoDB tasks...",
+        flush=True
     )
 
-    print("FAISS index loaded.")
 
-    print("==============================================")
-    print("RAG system ready.")
-    print("==============================================")
+    mongo_client = None
 
 
+    try:
+
+        mongo_client = MongoClient(
+            MONGO_URI,
+            serverSelectionTimeoutMS=5000
+        )
 
 
-def search_faiss(question):
+        # Check connection
+        mongo_client.admin.command(
+            "ping"
+        )
 
-    load_rag()
 
-    documents = vector_store.similarity_search(
-        question,
-        k=3
-    )
+        db = mongo_client[
+            MONGO_DB_NAME
+        ]
 
-    if not documents:
-        return "No relevant information was found."
 
-    context_parts = []
+        collection = db[
+            "tasks"
+        ]
 
-    for doc in documents:
 
-        if doc.page_content:
+        tasks = list(
+            collection.find().limit(50)
+        )
 
-            context_parts.append(
-                doc.page_content
+
+        print(
+            f"MongoDB tasks found: {len(tasks)}",
+            flush=True
+        )
+
+
+        if not tasks:
+
+            return ""
+
+
+        question_words = get_words(
+            question
+        )
+
+
+        scored_tasks = []
+
+
+        for task in tasks:
+
+            title = str(
+                task.get(
+                    "title",
+                    ""
+                )
             )
 
-    if not context_parts:
 
-        return "No relevant information was found."
+            description = str(
+                task.get(
+                    "description",
+                    ""
+                )
+            )
 
-    context = "\n\n".join(context_parts)
+
+            skills = task.get(
+                "skill",
+                []
+            )
+
+
+            budget = str(
+                task.get(
+                    "budget",
+                    ""
+                )
+            )
+
+
+            issue_date = str(
+                task.get(
+                    "issueDate",
+                    ""
+                )
+            )
+
+
+            deadline_date = str(
+                task.get(
+                    "deadlineDate",
+                    ""
+                )
+            )
+
+
+            # Convert skills to text
+
+            if isinstance(
+                skills,
+                list
+            ):
+
+                skills_text = ", ".join(
+                    str(skill)
+                    for skill in skills
+                )
+
+            else:
+
+                skills_text = str(
+                    skills
+                )
+
+
+            task_text = f"""
+            {title}
+            {description}
+            {skills_text}
+            {budget}
+            """
+
+
+            task_words = get_words(
+                task_text
+            )
+
+
+            score = len(
+                question_words.intersection(
+                    task_words
+                )
+            )
+
+
+            # Extra matching for title
+
+            question_lower = question.lower()
+
+
+            if title.lower() in question_lower:
+
+                score += 10
+
+
+            # Extra matching for skills
+
+            if isinstance(
+                skills,
+                list
+            ):
+
+                for skill in skills:
+
+                    skill_text = str(
+                        skill
+                    ).lower()
+
+
+                    if (
+                        skill_text
+                        and
+                        skill_text in question_lower
+                    ):
+
+                        score += 5
+
+
+            scored_tasks.append(
+                (
+                    score,
+                    task
+                )
+            )
+
+
+        # Highest score first
+
+        scored_tasks.sort(
+            key=lambda item: item[0],
+            reverse=True
+        )
+
+
+        # Check whether user is asking about tasks
+
+        task_words = [
+            "task",
+            "tasks",
+            "job",
+            "jobs",
+            "work",
+            "available",
+            "budget",
+            "deadline",
+            "skill"
+        ]
+
+
+        asks_about_tasks = any(
+            word in question_lower
+            for word in task_words
+        )
+
+
+        # Select relevant tasks
+
+        if asks_about_tasks:
+
+            selected_tasks = [
+                task
+                for score, task
+                in scored_tasks[:5]
+            ]
+
+        else:
+
+            selected_tasks = [
+                task
+                for score, task
+                in scored_tasks[:3]
+                if score > 0
+            ]
+
+
+        if not selected_tasks:
+
+            return ""
+
+
+        context_parts = []
+
+
+        for task in selected_tasks:
+
+            title = task.get(
+                "title",
+                ""
+            )
+
+
+            description = task.get(
+                "description",
+                ""
+            )
+
+
+            skills = task.get(
+                "skill",
+                []
+            )
+
+
+            budget = task.get(
+                "budget",
+                ""
+            )
+
+
+            issue_date = task.get(
+                "issueDate",
+                ""
+            )
+
+
+            deadline_date = task.get(
+                "deadlineDate",
+                ""
+            )
+
+
+            if isinstance(
+                skills,
+                list
+            ):
+
+                skills_text = ", ".join(
+                    str(skill)
+                    for skill in skills
+                )
+
+            else:
+
+                skills_text = str(
+                    skills
+                )
+
+
+            task_information = f"""
+TASK
+
+Title:
+{title}
+
+Description:
+{description}
+
+Required Skills:
+{skills_text}
+
+Budget:
+{budget}
+
+Issue Date:
+{issue_date}
+
+Deadline Date:
+{deadline_date}
+"""
+
+
+            context_parts.append(
+                task_information
+            )
+
+
+        return "\n\n".join(
+            context_parts
+        )
+
+
+    except Exception as e:
+
+        print(
+            "MongoDB search error:",
+            repr(e),
+            flush=True
+        )
+
+        return ""
+
+
+    finally:
+
+        if mongo_client:
+
+            mongo_client.close()
+
+
+# =========================================================
+# GET CONTEXT
+# =========================================================
+
+def get_context(question):
+
+    print(
+        "Getting MiniFiverr information...",
+        flush=True
+    )
+
+
+    context = ""
+
+
+    # -----------------------------------------------------
+    # WEBSITE INFORMATION
+    # -----------------------------------------------------
+
+    if website_information:
+
+        context += f"""
+
+MINIFIVERR WEBSITE KNOWLEDGE
+
+{website_information}
+
+"""
+
+
+    # -----------------------------------------------------
+    # MONGODB TASK INFORMATION
+    # -----------------------------------------------------
+
+    task_context = search_tasks(
+        question
+    )
+
+
+    if task_context:
+
+        context += f"""
+
+MONGODB TASK INFORMATION
+
+{task_context}
+
+"""
+
+
+    # -----------------------------------------------------
+    # FALLBACK
+    # -----------------------------------------------------
+
+    if not context:
+
+        context = """
+No MiniFiverr information was found.
+"""
+
+
+    print(
+        "Context prepared successfully.",
+        flush=True
+    )
+
 
     return context
 
 
-
+# =========================================================
+# GENERATE AI ANSWER
+# =========================================================
 
 def generate_answer(
     question,
@@ -174,111 +582,222 @@ def generate_answer(
     user_information=""
 ):
 
+
     system_prompt = """
-You are the MiniFiverr Website Assistant.
+You are the official MiniFiverr AI Assistant.
 
-MiniFiverr is a freelancing platform where:
+You help users understand and use the MiniFiverr
+freelancing website.
 
-- Posters can create tasks.
-- Freelancers can browse and apply for tasks.
-- Posters can view applicants.
-- Posters can select freelancers.
-- Users can manage their profiles.
-- Users can track their work and applications.
-
-Your job is to answer questions about the MiniFiverr website.
+The MiniFiverr website knowledge is provided
+in the user message.
 
 IMPORTANT RULES:
 
-1. Use the provided context to answer the question.
-2. Do not invent information.
-3. If the information is not available, clearly say that you don't have that information.
-4. Give simple and helpful answers.
-5. Keep answers concise unless the user asks for details.
-6. Never reveal passwords, API keys, JWT tokens, or other secrets.
-7. If user information is provided, use it only to answer questions about that user.
-8. Do not expose private information belonging to another user.
+1. Always use the provided MiniFiverr website
+   knowledge when answering website questions.
+
+2. Do NOT give generic answers if the website
+   knowledge contains the answer.
+
+3. Do NOT invent features that are not present
+   in the provided information.
+
+4. Do NOT invent task information.
+
+5. If the user asks about freelancers, use the
+   FREELANCER section.
+
+6. If the user asks about posters, use the
+   POSTER section.
+
+7. If the user asks how to create a task, use
+   the CREATING A TASK section.
+
+8. If the user asks how to apply for a task,
+   use the APPLYING FOR A TASK section.
+
+9. If the user asks about profiles, use the
+   PROFILE section.
+
+10. If the user asks about ratings, use the
+    RATINGS section.
+
+11. If the user asks about task statuses, use
+    the TASK STATUS section.
+
+12. If the user asks about available tasks,
+    use the MongoDB task information when available.
+
+13. If the user asks about themselves, use the
+    logged-in user information.
+
+14. Never reveal passwords.
+
+15. Never reveal JWT tokens.
+
+16. Never reveal API keys.
+
+17. Never reveal secrets.
+
+18. Never expose another user's private information.
+
+19. Answer naturally and professionally.
+
+20. Keep normal answers concise.
+
+21. If the user asks for steps, provide numbered steps.
+
+22. If the user asks for a list, use bullet points.
+
+23. If information is unavailable, clearly say
+    that the information is not available.
+
+24. Do not say "according to the context".
+
+25. Respond as the MiniFiverr assistant directly.
 """
 
-    
+
+    # =====================================================
+    # LOGGED-IN USER INFORMATION
+    # =====================================================
 
     if user_information:
 
         system_prompt += f"""
 
-Information about the currently logged-in user:
+CURRENTLY LOGGED-IN USER INFORMATION:
 
 {user_information}
 
-Use this information only when the user's question
-requires information about themselves.
+This information belongs to the currently
+logged-in user.
+
+Use it only when the user asks about their
+own information.
+
+For example:
+
+"Tell me about myself."
+
+"What is my name?"
+
+"What is my email?"
+
+"What is my role?"
+
+"What are my skills?"
 """
 
 
-   
+    # =====================================================
+    # USER PROMPT
+    # =====================================================
 
     user_prompt = f"""
-Website knowledge and retrieved information:
+MINIFIVERR WEBSITE AND TASK INFORMATION:
 
 {context}
 
-User question:
+
+USER QUESTION:
 
 {question}
 
-Answer the user based only on the available information.
+
+Now answer the user's question using the
+MiniFiverr information provided above.
 """
 
 
-    
-
-    response = client.chat.completions.create(
-
-        model="openai/gpt-oss-20b",
-
-        messages=[
-            {
-                "role": "system",
-                "content": system_prompt
-            },
-            {
-                "role": "user",
-                "content": user_prompt
-            }
-        ],
-
-        temperature=0.2,
-
-        max_tokens=400
+    print(
+        "Sending question to Groq...",
+        flush=True
     )
 
 
-    answer = response.choices[0].message.content
+    try:
 
-    return answer
+        response = client.chat.completions.create(
+
+            model="openai/gpt-oss-20b",
+
+            messages=[
+                {
+                    "role": "system",
+                    "content": system_prompt
+                },
+
+                {
+                    "role": "user",
+                    "content": user_prompt
+                }
+            ],
+
+            temperature=0.2,
+
+            max_tokens=400
+        )
 
 
+        answer = response.choices[
+            0
+        ].message.content
 
+
+        print(
+            "Groq answer received.",
+            flush=True
+        )
+
+
+        return answer
+
+
+    except Exception as e:
+
+        print(
+            "Groq error:",
+            repr(e),
+            flush=True
+        )
+
+
+        return (
+            "Sorry, I could not generate an answer "
+            "right now."
+        )
+
+
+# =========================================================
+# MAIN CHATBOT FUNCTION
+# =========================================================
 
 def ask_chatbot(
     question,
     user_information=""
 ):
 
-    # Retrieve relevant documents
-    context = search_faiss(question)
 
-    # Generate answer using Groq
+    context = get_context(
+        question
+    )
+
+
     answer = generate_answer(
         question,
         context,
         user_information
     )
 
+
     return answer
 
 
-
+# =========================================================
+# REQUEST MODEL
+# =========================================================
 
 class ChatRequest(BaseModel):
 
@@ -287,59 +806,110 @@ class ChatRequest(BaseModel):
     user_information: str = ""
 
 
-
+# =========================================================
+# HOME ROUTE
+# =========================================================
 
 @app.get("/")
 def home():
 
     return {
-        "message": "MiniFiverr AI Assistant is running"
+        "message":
+        "MiniFiverr AI Assistant is running"
     }
 
 
-
+# =========================================================
+# CHAT ROUTE
+# =========================================================
 
 @app.post("/chat")
-def chat(request: ChatRequest):
+def chat(
+    request: ChatRequest
+):
 
     try:
 
         question = request.question.strip()
 
+
         if not question:
 
             return {
-                "answer": "Please enter a question."
+                "answer":
+                "Please enter a question."
             }
+
+
+        print(
+            "======================================",
+            flush=True
+        )
+
+
+        print(
+            "NEW CHAT QUESTION:",
+            question,
+            flush=True
+        )
+
 
         answer = ask_chatbot(
             question,
             request.user_information
         )
 
+
+        print(
+            "CHAT COMPLETED",
+            flush=True
+        )
+
+
         return {
             "answer": answer
         }
 
+
     except Exception as e:
-        print("🔥 CHATBOT ERROR:", repr(e), flush=True)
-        
+
+        print(
+            "🔥 CHATBOT ERROR:",
+            repr(e),
+            flush=True
+        )
+
+
         return {
-                "answer": "AI server error",
-                "error": str(e)
-            }
+            "answer":
+            "AI server error",
+
+            "error":
+            str(e)
+        }
 
 
-
-
+# =========================================================
+# LOCAL DEVELOPMENT
+# =========================================================
 
 if __name__ == "__main__":
 
     import uvicorn
 
+
     uvicorn.run(
+
         "chatbot:app",
+
         host="0.0.0.0",
-        port=int(os.environ.get("PORT", 8000)),
+
+        port=int(
+            os.environ.get(
+                "PORT",
+                8000
+            )
+        ),
+
         reload=False
     )
