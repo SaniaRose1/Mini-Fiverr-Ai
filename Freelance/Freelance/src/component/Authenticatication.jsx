@@ -105,7 +105,7 @@ const Authentication =() => {
        
         navigate("/dashboard");
       } else {
-        alert(result.message);
+        alert(result.message , "Please Enter Correct Creadential");
       }
     } catch (err) {
       console.log(err);
