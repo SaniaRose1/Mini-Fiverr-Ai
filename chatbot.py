@@ -321,13 +321,14 @@ def chat(request: ChatRequest):
             "answer": answer
         }
 
-    except Exception as error:
+    except Exception as e:
+       print("🔥 CHATBOT ERROR:", repr(e), flush=True)
 
-        print("Chatbot error:", error)
+    return {
+        "answer": "AI server error",
+        "error": str(e)
+    }
 
-        return {
-            "answer": "Sorry, something went wrong while generating the answer."
-        }
 
 
 
