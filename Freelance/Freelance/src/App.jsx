@@ -13,6 +13,7 @@ import Applicantslist from "./component/Applicantslist";
 import Lecture from "./component/Lecture";
 import Selectedfreelancer from "./component/Selectedfreelancer";
 import ChatBot from "./component/chatBot";
+import ViewTask from "./component/ViewTask";
 
 
 
@@ -30,6 +31,7 @@ function App() {
 <Route path='/ApplyForTasks' element={<Applyfortasks/>}/>
 <Route path="/Applicantlist" element ={<Applicantslist/>}/>
 <Route path="/Selectedfreelancer" element={<Selectedfreelancer/>}/>
+<Route path="/ViewTask" element={<ViewTask/>}/>
 <Route path="/Lecture" element ={<Lecture/>}/>
 </Route>
 </Routes>

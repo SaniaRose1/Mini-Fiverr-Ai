@@ -8,7 +8,10 @@ import path from "path";
 import {GoogleGenAI} from "@google/genai"
 import User from  '../../models/Users.js';
 import Task from '../../models/Tasks.js';
+
+
 import { fileURLToPath } from "url";
+
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -64,6 +67,7 @@ router.post("/register", async (req, res) => {
 router.post("/login", async(req,res)=>{
    const { email, password ,role} = req.body;
   try {
+  
     const user = await User.findOne({ email });
 
     if (!user) {

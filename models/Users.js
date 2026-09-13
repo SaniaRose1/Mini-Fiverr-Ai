@@ -1,4 +1,6 @@
-const mongoose = require('mongoose');
+import mongoose from "mongoose"
+console.log("MODEL MONGOOSE:", mongoose.version);
+console.log("MODEL MONGOOSE PATH:", import.meta.resolve("mongoose"));
 
 const userSchema = new mongoose.Schema({
     name:String,
@@ -15,4 +17,5 @@ const userSchema = new mongoose.Schema({
         required:true
     }
 },{timestamps:true})
-module.exports = mongoose.model("User",userSchema);
+const User = mongoose.model("User",userSchema);
+export default User;

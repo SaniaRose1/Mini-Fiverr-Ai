@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+import mongoose from "mongoose";
 
 const taskSchema = new mongoose.Schema({
  title : String ,
@@ -7,6 +7,7 @@ const taskSchema = new mongoose.Schema({
  issueDate : Date,
   deadlineDate : Date,
   skill :[String]
-});
+},{timestamps:true});
 
-module.exports = mongoose.model("Task" , taskSchema );
+const Task = mongoose.model("Task" , taskSchema );
+export default Task;

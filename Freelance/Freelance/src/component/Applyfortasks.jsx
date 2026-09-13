@@ -46,7 +46,7 @@ const Applyfortasks =()=>{
       const ApplyForTask = (post) => {
     const user = JSON.parse(localStorage.getItem("user"));
     const userSkill = Array.isArray(user?.skill) ? user.skill[0] : user?.skill;
-    const posts = post.skill;
+    const posts = Array.isArray(post?.skill) ? post.skill[0] : post?.skill;
     
     console.log("User skill:", user?.skill);
    console.log("Task skill:", post.skill);

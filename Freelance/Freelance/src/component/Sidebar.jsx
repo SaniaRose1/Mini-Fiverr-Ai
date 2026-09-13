@@ -18,7 +18,7 @@ const Sidebar=()=>{
   {buttons.map((items,index)=>(
      
      <div className="listBtn" key={items.id || index} >
-     <button type="button"  onClick={()=> navigate(items.path) }     className={`btn  ${location.pathname === "/dashboard" || location.pathname === "/PostedTasks" || location.pathname === "/ApplyForTasks" || location.pathname === "/Applicantlist"  || location.pathname === "/Selectedfreelancer"|| location.pathname === "/Lecture" ? "active" : " "}  `} ><i className={items.icon}></i> {items.name}</button>
+     <button type="button"  onClick={()=> navigate(items.path) }     className={`btn  ${location.pathname === "/dashboard" || location.pathname === "/PostedTasks" || location.pathname === "/ApplyForTasks" || location.pathname === "/Applicantlist"  || location.pathname === "/Selectedfreelancer"|| location.pathname === "/Lecture" ||  location.pathname === "/ViewTask" ? "active" : " "}  `} ><i className={items.icon}></i> {items.name}</button>
 </div>
      
   ))}  
