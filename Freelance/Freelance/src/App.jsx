@@ -12,7 +12,7 @@ import Applyfortasks from "./component/Applyfortasks";
 import Applicantslist from "./component/Applicantslist";
 import Lecture from "./component/Lecture";
 import Selectedfreelancer from "./component/Selectedfreelancer";
-import ChatBot from "./component/chatBot";
+import ChatBot from "./component/ChatBot";
 import ViewTask from "./component/ViewTask";
 
 
