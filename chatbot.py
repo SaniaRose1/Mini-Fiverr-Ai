@@ -10,9 +10,7 @@ from pymongo import MongoClient
 from groq import Groq
 
 
-# =========================================================
-# LOAD ENVIRONMENT VARIABLES
-# =========================================================
+
 
 load_dotenv()
 
@@ -33,9 +31,7 @@ if not MONGO_DB_NAME:
     raise ValueError("MONGO_DB_NAME is missing.")
 
 
-# =========================================================
-# FASTAPI APPLICATION
-# =========================================================
+
 
 app = FastAPI(
     title="MiniFiverr AI Assistant",
@@ -44,9 +40,7 @@ app = FastAPI(
 )
 
 
-# =========================================================
-# CORS
-# =========================================================
+
 
 frontend_url = os.getenv(
     "FRONTEND_URL",
@@ -70,18 +64,14 @@ app.add_middleware(
 )
 
 
-# =========================================================
-# GROQ CLIENT
-# =========================================================
+
 
 client = Groq(
     api_key=GROQ_API_KEY
 )
 
 
-# =========================================================
-# WEBSITE INFORMATION FILE
-# =========================================================
+
 
 WEBSITE_FILE = "website_info.txt"
 
@@ -138,9 +128,7 @@ def load_website_information():
 website_information = load_website_information()
 
 
-# =========================================================
-# MONGODB TASK SEARCH
-# =========================================================
+
 
 def get_words(text):
 
@@ -502,9 +490,7 @@ Deadline Date:
             mongo_client.close()
 
 
-# =========================================================
-# GET CONTEXT
-# =========================================================
+
 
 def get_context(question):
 
@@ -517,9 +503,7 @@ def get_context(question):
     context = ""
 
 
-    # -----------------------------------------------------
-    # WEBSITE INFORMATION
-    # -----------------------------------------------------
+   
 
     if website_information:
 
@@ -532,9 +516,7 @@ MINIFIVERR WEBSITE KNOWLEDGE
 """
 
 
-    # -----------------------------------------------------
-    # MONGODB TASK INFORMATION
-    # -----------------------------------------------------
+   
 
     task_context = search_tasks(
         question
@@ -552,9 +534,7 @@ MONGODB TASK INFORMATION
 """
 
 
-    # -----------------------------------------------------
-    # FALLBACK
-    # -----------------------------------------------------
+   
 
     if not context:
 
@@ -572,9 +552,6 @@ No MiniFiverr information was found.
     return context
 
 
-# =========================================================
-# GENERATE AI ANSWER
-# =========================================================
 
 def generate_answer(
     question,
@@ -659,9 +636,6 @@ IMPORTANT RULES:
 """
 
 
-    # =====================================================
-    # LOGGED-IN USER INFORMATION
-    # =====================================================
 
     if user_information:
 
@@ -691,9 +665,7 @@ For example:
 """
 
 
-    # =====================================================
-    # USER PROMPT
-    # =====================================================
+  
 
     user_prompt = f"""
 MINIFIVERR WEBSITE AND TASK INFORMATION:
@@ -770,9 +742,7 @@ MiniFiverr information provided above.
         )
 
 
-# =========================================================
-# MAIN CHATBOT FUNCTION
-# =========================================================
+
 
 def ask_chatbot(
     question,
@@ -795,9 +765,7 @@ def ask_chatbot(
     return answer
 
 
-# =========================================================
-# REQUEST MODEL
-# =========================================================
+
 
 class ChatRequest(BaseModel):
 
@@ -806,9 +774,7 @@ class ChatRequest(BaseModel):
     user_information: str = ""
 
 
-# =========================================================
-# HOME ROUTE
-# =========================================================
+
 
 @app.get("/")
 def home():
@@ -819,9 +785,7 @@ def home():
     }
 
 
-# =========================================================
-# CHAT ROUTE
-# =========================================================
+
 
 @app.post("/chat")
 def chat(
@@ -889,9 +853,7 @@ def chat(
         }
 
 
-# =========================================================
-# LOCAL DEVELOPMENT
-# =========================================================
+
 
 if __name__ == "__main__":
 
